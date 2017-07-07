@@ -1,0 +1,13 @@
+﻿<Window x:Class="MoonPdfWPFSimple.Window1"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	Title="MoonPdfWPFSimple" Height="600" Width="800"
+	xmlns:mpp="clr-namespace:MoonPdfLib"
+    xmlns:mpd="clr-namespace:MoonPdf"
+	Loaded="Window_Loaded"
+	WindowStartupLocation="CenterScreen"
+	>
+	<Grid>
+        <mpp:MoonPdfPanel Background="LightGray" ViewType="SinglePage" PageRowDisplay="ContinuousPageRows" PageMargin="0,2,4,2" AllowDrop="True" x:Name="pdfViewer1"/>		
+	</Grid>
+</Window>

@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <ProjectGuid>{0709EEE7-C9B2-4049-AC39-F993E25D72B7}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>MoonPdfWPFSimple</RootNamespace>
+    <AssemblyName>MoonPdfWPFSimple</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <NoWin32Manifest>False</NoWin32Manifest>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <NoStdLib>False</NoStdLib>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <BaseAddress>4194304</BaseAddress>
+    <RegisterForComInterop>False</RegisterForComInterop>
+    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+    <FileAlignment>4096</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+    <Optimize>True</Optimize>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="PresentationCore">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="PresentationFramework">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="WindowsBase">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="App.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>App.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="MoonPdfLib\ContinuousMoonPdfPanel.xaml.cs" />
+    <Compile Include="MoonPdfLib\Helper\BitmapExtensionMethods.cs" />
+    <Compile Include="MoonPdfLib\Helper\DpiHelper.cs" />
+    <Compile Include="MoonPdfLib\Helper\ListExtension.cs" />
+    <Compile Include="MoonPdfLib\Helper\PageHelper.cs" />
+    <Compile Include="MoonPdfLib\Helper\VisualTreeHelperEx.cs" />
+    <Compile Include="MoonPdfLib\IMoonPdfPanel.cs" />
+    <Compile Include="MoonPdfLib\MoonPdfPanel.xaml.cs" />
+    <Compile Include="MoonPdfLib\MoonPdfPanelInputHandler.cs" />
+    <Compile Include="MoonPdfLib\MuPdf\MuPdfWrapper.cs" />
+    <Compile Include="MoonPdfLib\PageDisplaySettings.cs" />
+    <Compile Include="MoonPdfLib\PageRowBound.cs" />
+    <Compile Include="MoonPdfLib\PageRowDisplayType.cs" />
+    <Compile Include="MoonPdfLib\PdfImage.cs" />
+    <Compile Include="MoonPdfLib\PdfImageProvider.cs" />
+    <Compile Include="MoonPdfLib\SinglePageMoonPdfPanel.xaml.cs" />
+    <Compile Include="MoonPdfLib\ViewType.cs" />
+    <Compile Include="MoonPdfLib\Virtualizing\AsyncVirtualizingCollection.cs" />
+    <Compile Include="MoonPdfLib\Virtualizing\CustomVirtualizingPanel.cs" />
+    <Compile Include="MoonPdfLib\Virtualizing\IItemsProvider.cs" />
+    <Compile Include="MoonPdfLib\Virtualizing\VirtualizingCollection.cs" />
+    <Compile Include="MoonPdfLib\ZoomType.cs" />
+    <Compile Include="MoonPdf\AboutWindow.xaml.cs" />
+    <Compile Include="MoonPdf\BaseCommand.cs" />
+    <Compile Include="MoonPdf\Commands.cs" />
+    <Compile Include="MoonPdf\DelegateCommand.cs" />
+    <Compile Include="MoonPdf\FullscreenCommand.cs" />
+    <Compile Include="MoonPdf\GotoPageDialog.xaml.cs" />
+    <Compile Include="MoonPdf\IconExtension.cs" />
+    <Compile Include="MoonPdf\MainWindow.xaml.cs" />
+    <Compile Include="MoonPdf\MainWindowDataContext.cs" />
+    <Compile Include="MoonPdf\MenuItemExtensions.cs" />
+    <Compile Include="MoonPdf\PdfPasswordDialog.xaml.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <DependentUpon>Resources.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+    </Compile>
+    <Compile Include="Properties\WPFAssemblyInfo.cs" />
+    <Compile Include="Window1.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>Window1.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="MoonPdfLib\ContinuousMoonPdfPanel.xaml" />
+    <Page Include="MoonPdfLib\GlobalResources.xaml" />
+    <Page Include="MoonPdfLib\MoonPdfPanel.xaml" />
+    <Page Include="MoonPdfLib\SinglePageMoonPdfPanel.xaml" />
+    <Page Include="MoonPdf\AboutWindow.xaml" />
+    <Page Include="MoonPdf\GotoPageDialog.xaml" />
+    <Page Include="MoonPdf\MainWindow.xaml" />
+    <Page Include="MoonPdf\PdfPasswordDialog.xaml" />
+    <Page Include="Window1.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="doc\todo.txt" />
+    <None Include="libmupdf.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\glm.pdf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="MoonPdf" />
+    <Folder Include="MoonPdfLib" />
+    <Folder Include="MoonPdfLib\Helper" />
+    <Folder Include="MoonPdfLib\MuPdf" />
+    <Folder Include="MoonPdfLib\Virtualizing" />
+    <Folder Include="doc" />
+    <Folder Include="Resources" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

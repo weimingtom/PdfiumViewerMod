@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <ProjectGuid>{41C40755-BF4C-489A-96CE-F82798FB1157}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>PdfiumViewerWinFormSimple</RootNamespace>
+    <AssemblyName>PdfiumViewerWinFormSimple</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>Full</DebugType>
+    <Optimize>False</Optimize>
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+    <Optimize>True</Optimize>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="MainForm.cs" />
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PdfiumViewer\Enums\HitTest.cs" />
+    <Compile Include="PdfiumViewer\Enums\MouseWheelMode.cs" />
+    <Compile Include="PdfiumViewer\Enums\PdfRenderFlags.cs" />
+    <Compile Include="PdfiumViewer\Enums\PdfViewerZoomMode.cs" />
+    <Compile Include="PdfiumViewer\Enums\ScrollAction.cs" />
+    <Compile Include="PdfiumViewer\Exceptions\PdfError.cs" />
+    <Compile Include="PdfiumViewer\Exceptions\PdfException.cs" />
+    <Compile Include="PdfiumViewer\Model\PdfDocument.cs" />
+    <Compile Include="PdfiumViewer\Model\PdfFile.cs" />
+    <Compile Include="PdfiumViewer\Model\PdfPoint.cs" />
+    <Compile Include="PdfiumViewer\Model\PdfRectangle.cs" />
+    <Compile Include="PdfiumViewer\Native\NativeMethods.cs" />
+    <Compile Include="PdfiumViewer\Native\NativeMethods.Pdfium.cs" />
+    <Compile Include="PdfiumViewer\Native\PdfLibrary.cs" />
+    <Compile Include="PdfiumViewer\Utils\StreamManager.cs" />
+    <Compile Include="PdfiumViewer\View\CustomScrollControl.cs" />
+    <Compile Include="PdfiumViewer\View\PanningZoomingScrollControl.cs" />
+    <Compile Include="PdfiumViewer\View\PdfRenderer.cs" />
+    <Compile Include="PdfiumViewer\View\PdfViewer.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <DependentUpon>Resources.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="dbghelp.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="pdfium.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="PdfiumViewer" />
+    <Folder Include="PdfiumViewer\Enums" />
+    <Folder Include="PdfiumViewer\Exceptions" />
+    <Folder Include="PdfiumViewer\Model" />
+    <Folder Include="PdfiumViewer\Native" />
+    <Folder Include="PdfiumViewer\Utils" />
+    <Folder Include="PdfiumViewer\View" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
