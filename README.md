@@ -1,4 +1,10 @@
-#PdfiumViewerMod
+# PdfiumViewerMod  
+My WPF mod of PdfiumViewer  
+
+## Ref  
+* https://github.com/pvginkel/PdfiumViewer  
+* https://github.com/reliak/moonpdf  
+* http://git.oschina.net/weimingtom/pdfiumviewermod  
 
 ## Branches  
 * v1: full page paint  
