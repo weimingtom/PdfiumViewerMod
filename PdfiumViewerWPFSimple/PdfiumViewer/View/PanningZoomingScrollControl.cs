@@ -27,7 +27,7 @@ namespace PdfiumViewer
 		{
             ZoomFactor = DefaultZoomFactor;
             _zoomMin = DefaultZoomMin;
-            _zoomMax = DefaultZoomMax;			
+            _zoomMax = DefaultZoomMax;	
 		}
 		
         public const double DefaultZoomMin = 0.1;

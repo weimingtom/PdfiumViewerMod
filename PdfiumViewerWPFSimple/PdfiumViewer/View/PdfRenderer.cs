@@ -21,11 +21,48 @@ namespace PdfiumViewer
 {
 	public class PdfRenderer : PanningZoomingScrollControl
 	{
+		private const bool ENABLE_ANNOT = true; // 
+		private const bool ENABLE_ANNOT_SCREEN = false; //相对于屏幕
+		private const bool ENABLE_ANNOT_PAGE = true; //相对于pdf文档页面
+		
 		private BackgroundWorker worker = new BackgroundWorker();
 		private Stack<LoadQueueItem> pendingQueue = new Stack<LoadQueueItem>(); 
         private object locker = new object();
         //private Dictionary<int, BitmapSource> cacheMap = new Dictionary<int, BitmapSource>(); //FIXME:这里要改成LRU防止内存溢出
-        private LRUCache<int, BitmapSource> cacheMap = new LRUCache<int, BitmapSource>(200);
+        private LRUCache<int, BitmapSource> cacheMap = new LRUCache<int, BitmapSource>(100); //每张图估算是1MB
+        
+        //annot
+        public bool EnableAnnot 
+        {
+        	get {return enableAnnot;}
+        	set {enableAnnot = value; this.InvalidateVisual();}
+        }
+        private bool enableAnnot = false;
+        private double _annotThick = 4.0; //FIXME:目前是个固定值
+        private bool isAnnoting = false;
+        public double _mouseMoveX = -1;
+        public double _mouseMoveY = -1;
+        public List<List<Point>> _annotList = new List<List<Point>>();
+        public class PageAnnot
+        {
+        	public int page;
+        	public List<Point> pts;
+        	
+        	public PageAnnot()
+        	{
+        		this.page = -1;
+        		this.pts = new List<Point>();
+        	}
+        }
+        public class PagePoint
+        {
+        	public double X;
+        	public double Y;
+        	public int page;
+        }
+        
+        public List<PageAnnot> _pageAnnotList = new List<PageAnnot>();
+        
         
         static PdfRenderer()
 		{
@@ -38,7 +75,9 @@ namespace PdfiumViewer
 			this.Unloaded += PdfRenderer_Unloaded;
 			this.SizeChanged += new SizeChangedEventHandler(PdfRenderer_SizeChanged);
             _filename = null;
-		}
+            
+            _annotList.Add(new List<Point>());
+        }
 
 		void PdfRenderer_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
@@ -408,6 +447,7 @@ namespace PdfiumViewer
 
         private void ReloadDocument()
         {
+        	cacheMap.Clear();
             _height = 0;
             _maxWidth = 0;
             _maxHeight = 0;
@@ -832,7 +872,7 @@ namespace PdfiumViewer
                     Pen pen2 = new Pen(Brushes.Black, 1);
                     drawingContext.DrawRectangle(brush2, pen2, new Rect(pageBounds.X, pageBounds.Y, pageBounds.Width > 0 ? pageBounds.Width : 0, pageBounds.Height > 0 ? pageBounds.Height : 0));
 
-                    if (!this.isScrolling)
+                    if (!this.isScrolling && !this.isAnnoting)
                     {
 	                    //Debug.WriteLine("OnPaint =================3 : " + page + ",[" + pageBounds.X + "," + pageBounds.Y + "," + pageBounds.Width + "," + pageBounds.Height);
 	                    //FIXME:
@@ -845,6 +885,50 @@ namespace PdfiumViewer
                 }
             }
 
+            if (ENABLE_ANNOT)
+            {
+            	Pen pen3 = new Pen(Brushes.Red, _annotThick * this.Zoom);
+            	pen3.StartLineCap = PenLineCap.Round;
+				pen3.EndLineCap = PenLineCap.Round;
+				pen3.LineJoin = PenLineJoin.Round;
+				
+				if (ENABLE_ANNOT_SCREEN)
+				{
+					foreach (List<Point> aList in this._annotList)
+					{
+						for (int i = 0; i < aList.Count; ++i)
+						{
+							if (i == aList.Count - 1)
+							{
+								continue;
+							}
+							drawingContext.DrawLine(pen3, aList[i], aList[i+1]);
+						}
+					}
+				}
+				if (ENABLE_ANNOT_PAGE)
+				{
+					foreach (PageAnnot pageAnnot in this._pageAnnotList)
+					{
+						for (int i = 0; i < pageAnnot.pts.Count; ++i)
+						{
+							if (i == pageAnnot.pts.Count - 1)
+							{
+								continue;
+							}
+							Point p1 = PointFromPdf2(new PdfPoint(pageAnnot.page, pageAnnot.pts[i]));
+							Point p2 = PointFromPdf2(new PdfPoint(pageAnnot.page, pageAnnot.pts[i+1]));                        
+							drawingContext.DrawLine(pen3, p1, p2);
+						}
+					}
+				}
+				//cursor pen
+				if (enableAnnot)
+				{
+            		drawingContext.DrawEllipse(Brushes.Red, null, new Point(_mouseMoveX, _mouseMoveY), _annotThick * 0.5 * this.Zoom, _annotThick * 0.5 * this.Zoom);
+				}
+            }            
+            
             if (_visiblePageStart == -1)
                 _visiblePageStart = 0;
             if (_visiblePageEnd == -1)
@@ -1079,5 +1163,305 @@ namespace PdfiumViewer
         	}
 		}
  
+       	
+ 		//------------------------------------
+ 		//annot
+ 		
+        private void createAnnotMove()
+        {
+        	if (enableAnnot)
+            {
+        		if (_annotList.Count > 0 && _annotList[_annotList.Count - 1] != null)
+        		{
+        			List<Point> aList = _annotList[_annotList.Count - 1];
+        			if (aList.Count > 0)
+        			{
+        				_annotList.Add(new List<Point>());
+        			}
+        		}
+        		else
+        		{
+        			_annotList.Add(new List<Point>());
+        		}
+        		
+        		
+        		if (_pageAnnotList.Count > 0 && _pageAnnotList[_pageAnnotList.Count - 1] != null)
+        		{
+        			List<Point> aList = _pageAnnotList[_pageAnnotList.Count - 1].pts;
+        			if (aList.Count > 0)
+        			{
+        				_pageAnnotList.Add(new PageAnnot());
+        			}
+        		}
+        		else
+        		{
+        			_pageAnnotList.Add(new PageAnnot());
+        		}
+        	}
+        }
+        
+        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+        	if (enableAnnot)
+            {
+        		_mouseMoveX = e.GetPosition(this).X;
+        		_mouseMoveY = e.GetPosition(this).Y;
+        		this.InvalidateVisual();
+        		
+        		if (!Keyboard.IsKeyDown(Key.Space))
+        		{
+		        	createAnnotMove();
+		        	isAnnoting = true;
+		        	this.onDrag(e);
+			    }
+        	}
+        	
+        	base.OnMouseLeftButtonDown(e);
+        }
+        
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+        	//Debug.WriteLine("OnMouseMove x:" + e.GetPosition(this).X + " y:" + e.GetPosition(this).Y);
+        	if (enableAnnot)
+            {
+        		_mouseMoveX = e.GetPosition(this).X;
+        		_mouseMoveY = e.GetPosition(this).Y;
+        		this.InvalidateVisual();        	
+        		
+        		if (!Keyboard.IsKeyDown(Key.Space))
+        		{
+        			if (Capture)
+        			{
+        				isAnnoting = true;
+        				this.onDrag(e);
+        			}
+        			return;
+        		}
+        	}
+        	
+        	base.OnMouseMove(e);
+        }
+        
+        private void onDrag(MouseEventArgs e)
+        {	        			
+        	//here annot start
+        	//Debug.WriteLine("Annot x:" + e.GetPosition(this).X + " y:" + e.GetPosition(this).Y);
+			if (_annotList.Count > 0 && _annotList[_annotList.Count - 1] != null)
+			{
+				List<Point> aList = _annotList[_annotList.Count - 1];
+				aList.Add(new Point(e.GetPosition(this).X, e.GetPosition(this).Y));
+			}
+			if (_pageAnnotList.Count > 0 && _pageAnnotList[_pageAnnotList.Count - 1] != null)
+			{
+				PagePoint pagePoint = getPagePoint(e.GetPosition(this).X, e.GetPosition(this).Y);
+				if (pagePoint != null)
+				{
+					if (_pageAnnotList[_pageAnnotList.Count - 1].page == -1)
+					{
+    					_pageAnnotList[_pageAnnotList.Count - 1].page = pagePoint.page;
+					}
+					else if (_pageAnnotList[_pageAnnotList.Count - 1].page == pagePoint.page)
+					{
+    					List<Point> aList = _pageAnnotList[_pageAnnotList.Count - 1].pts;
+    					aList.Add(new Point(pagePoint.X, pagePoint.Y));
+					}
+					else
+					{
+						//FIXME: the stroke is not in the same page
+					}
+    			}
+			}
+			//end
+        }
+        
+        protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+        {
+        	isAnnoting = false;
+			createAnnotMove();
+        	base.OnMouseLeftButtonUp(e);
+        }
+        
+        protected override void OnMouseLeave(MouseEventArgs e)
+        {
+        	this._mouseMoveX = -1;
+        	this._mouseMoveY = -1;
+        	
+        	isAnnoting = false;
+        	createAnnotMove();
+        	base.OnMouseLeave(e);
+        }
+        
+        //screen point to page point
+        public PagePoint getPagePoint(double x, double y)
+        {
+//           	for (int page = 0; page < Document.getPageSizes().Count; page++)
+//            {
+//                var pageCache = _pageCache[page];
+//                var rectangle = pageCache.OuterBounds;
+//                rectangle.Offset(offset.X, offset.Y);
+//            }
+
+			PdfPoint ppt = PointToPdf2(new Point(x, y));
+
+			if (ppt != PdfPoint.Empty)
+			{
+				PagePoint result = new PagePoint();
+        		result.X = ppt.Location.X;
+        		result.Y = ppt.Location.Y;
+        		result.page = ppt.Page;
+        		Debug.WriteLine("page:" + result.page + ",x:" + result.X + ",y:" + result.Y);
+				return result;
+        	}
+			else
+			{
+				return null;
+			}
+        }
+        
+        public bool SaveAnnot(string annotFilename)
+        {
+			Dictionary<int, List<PageAnnot>> mapPage = new Dictionary<int, List<PageAnnot>>();
+			foreach (PageAnnot pageAnnot in this._pageAnnotList)
+			{
+				if (pageAnnot.page < 0) continue; //maybe -1, only fake
+				if (!mapPage.ContainsKey(pageAnnot.page))
+				{
+					mapPage.Add(pageAnnot.page, new List<PageAnnot>());
+				}
+				mapPage[pageAnnot.page].Add(pageAnnot);
+			}
+			
+			if (mapPage.Keys.Count > 0)
+			{
+				FileInfo myFile = new FileInfo(annotFilename); 
+				using (StreamWriter sW = myFile.CreateText())
+				{
+					sW.WriteLine("a" + " " + mapPage.Keys.Count);
+					foreach (int page in mapPage.Keys)
+					{
+						List<PageAnnot> pageAnnotList = mapPage[page];
+						int total = 0;
+						foreach (PageAnnot pageAnnot in pageAnnotList)
+						{
+							total += pageAnnot.pts.Count;
+						}
+						sW.WriteLine("g" + " " + page + " " + pageAnnotList.Count + " " + total);
+						foreach (PageAnnot pageAnnot in pageAnnotList)
+						{
+							sW.WriteLine("c" + " " + pageAnnot.pts.Count);
+						}
+						foreach (PageAnnot pageAnnot in pageAnnotList)
+						{
+							for (int i = 0; i < pageAnnot.pts.Count; ++i)
+							{
+								sW.WriteLine("p" + " " + pageAnnot.pts[i].X + " " + pageAnnot.pts[i].Y);
+							}
+						}
+					}
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+        }
+        
+        
+        public PdfPoint PointToPdf2(Point location)
+        {
+            if (Document == null)
+                return PdfPoint.Empty;
+
+            var offset = GetScrollOffset();
+
+            for (int page = 0; page < Document.getPageSizes().Count; page++)
+            {
+                PageCache pageCache = _pageCache[page];
+                Rect rectangle = pageCache.OuterBounds;
+                rectangle.Offset(offset.X, offset.Y);
+
+                if (rectangle.Contains(location))
+                {
+                    var pageBounds = pageCache.Bounds;
+                    pageBounds.Offset(offset.X, offset.Y);
+
+                    if (pageBounds.Contains(location))
+                    {
+                        var size = TranslateSize(Document.getPageSizes()[page]);
+                        location = new Point(location.X - pageBounds.Left, location.Y - pageBounds.Top);
+
+                        Point translated = new Point(
+                            location.X * (size.Width / pageBounds.Width),
+                            (location.Y) * (size.Height / pageBounds.Height)
+                        );
+
+                        return new PdfPoint(page, translated);
+                    }
+
+                    break;
+                }
+            }
+
+            return PdfPoint.Empty;
+        }
+		
+        public Point PointFromPdf2(PdfPoint point)
+        {
+            var offset = GetScrollOffset();
+            var pageCache = _pageCache[point.Page];
+
+            var pageBounds = pageCache.Bounds;
+            pageBounds.Offset(offset.X, offset.Y);
+
+            var size = TranslateSize(Document.getPageSizes()[point.Page]);
+            double scaleX = pageBounds.Width / size.Width;
+            double scaleY = pageBounds.Height / size.Height;
+
+            return new Point(
+                (int)(pageBounds.X + point.Location.X * scaleX),
+                (int)(pageBounds.Y + (point.Location.Y) * scaleY)
+            );
+        }
+        
+        public void undoAnnot()
+        {
+        	int delIndex = -1;
+			for (int i = this._pageAnnotList.Count - 1; i >= 0; --i)
+			{
+				PageAnnot pageAnnot = this._pageAnnotList[i];
+				if (pageAnnot.page < 0) continue; //maybe -1, only fake
+				if (pageAnnot.pts.Count > 0)
+				{
+					delIndex = i;
+					break;
+				}
+			}
+			if (delIndex >= 0)
+			{
+				this._pageAnnotList.RemoveAt(delIndex);
+				this.InvalidateVisual();
+			}
+        }
+        
+        public bool hasAnnot()
+        {
+			Dictionary<int, List<PageAnnot>> mapPage = new Dictionary<int, List<PageAnnot>>();
+			foreach (PageAnnot pageAnnot in this._pageAnnotList)
+			{
+				if (pageAnnot.page < 0) continue; //maybe -1, only fake
+				if (!mapPage.ContainsKey(pageAnnot.page))
+				{
+					mapPage.Add(pageAnnot.page, new List<PageAnnot>());
+				}
+				mapPage[pageAnnot.page].Add(pageAnnot);
+			}
+			
+			if (mapPage.Keys.Count > 0)
+			{
+				return true;
+			}
+			return false;
+        }
 	}
 }

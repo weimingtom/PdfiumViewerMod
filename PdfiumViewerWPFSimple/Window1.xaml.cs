@@ -19,6 +19,7 @@ using System.IO;
 using PdfiumViewer;
 using System.Windows.Threading;
 using System.Windows.Media.Animation;
+using System.Diagnostics;
 
 //BorderBrush="#FF737070"
 namespace PdfiumViewerWPFSimple
@@ -28,6 +29,11 @@ namespace PdfiumViewerWPFSimple
 	/// </summary>
 	public partial class Window1 : Window
 	{
+		private const bool TEST_ANNOT = false;
+		private const string TEST_ANNOT_EXE = @"E:\CodeLite\mupdfannot\Debug\mupdf.exe";
+		private const string TEST_ANNOT_INPUT = @"E:\CodeLite\mupdfannot\Debug\test.pdf";
+		private const string TEST_ANNOT_OUTPUT = @"E:\CodeLite\mupdfannot\Debug\test_output.pdf";
+		
 		private DispatcherTimer timer = new DispatcherTimer();
 		private bool isSliderEnter = false;
 		
@@ -40,7 +46,20 @@ namespace PdfiumViewerWPFSimple
         {
             pdfRendererer1.Filename = "glm.pdf";
             string message = "";
-            Stream LoadStream = new MemoryStream(PdfiumViewerWPFSimple.Properties.Resources.glm);
+            Stream LoadStream;
+            if (!TEST_ANNOT)
+            {
+            	LoadStream = new MemoryStream(PdfiumViewerWPFSimple.Properties.Resources.glm);
+            }
+            else
+            {
+            	using (FileStream fs = new FileStream(TEST_ANNOT_INPUT, FileMode.Open))
+            	{
+					byte[] data = new byte[fs.Length]; 
+					fs.Read(data, 0, data.Length);
+					LoadStream = new MemoryStream(data);
+            	}
+            }
             pdfRendererer1.ViewArea.PdfRenderer.Load(PdfRenderer.OpenDocument2(LoadStream, ref message)); //FIXME:
             
             timer.Interval = TimeSpan.FromMilliseconds(100);
@@ -63,6 +82,14 @@ namespace PdfiumViewerWPFSimple
 
         void Window1_KeyDown(object sender, KeyEventArgs e)
         {
+        	if (e.Key == Key.A)
+        	{
+        		this.pdfRendererer1.ViewArea.PdfRenderer.EnableAnnot = !this.pdfRendererer1.ViewArea.PdfRenderer.EnableAnnot;
+        	}
+        	else if (e.Key == Key.B)
+        	{
+        		this.pdfRendererer1.ViewArea.PdfRenderer.undoAnnot();
+        	}
         	this.pdfRendererer1.ViewArea.PdfRenderer.PdfRenderer_PreviewKeyDown(sender, e);
         }
 
@@ -128,5 +155,33 @@ namespace PdfiumViewerWPFSimple
         {
         	this.slider1.Visibility = Visibility.Hidden;
         }
+        
+		void Window_Closed(object sender, EventArgs e)
+		{
+			string annotFilename = @"annot.txt";
+			this.pdfRendererer1.ViewArea.PdfRenderer.SaveAnnot(annotFilename);
+		
+			if (TEST_ANNOT)
+			{
+	            try 
+	            {
+	                ProcessStartInfo processStartInfo = new ProcessStartInfo();
+	                processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+	                processStartInfo.CreateNoWindow = true;
+	                processStartInfo.UseShellExecute = false;
+	                processStartInfo.RedirectStandardOutput = true;
+	                processStartInfo.RedirectStandardError = true;
+	                processStartInfo.FileName = TEST_ANNOT_EXE;
+	                processStartInfo.Arguments = "0";
+	                processStartInfo.Arguments += " \"" + TEST_ANNOT_INPUT + "\"";
+	                processStartInfo.Arguments += " \"" + annotFilename + "\"";;
+	                processStartInfo.Arguments += " \"" + TEST_ANNOT_OUTPUT + "\"";
+	
+	                Process.Start(processStartInfo).WaitForExit();
+	            } catch (Exception exception) {
+	            	Debug.WriteLine("Caught exception: " + exception.Message);
+	            }
+			}
+		}
 	}
 }

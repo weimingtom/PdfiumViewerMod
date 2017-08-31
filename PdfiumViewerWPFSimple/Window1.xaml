@@ -5,7 +5,8 @@
 	Height="600"
 	Width="800"
 	WindowStartupLocation="CenterScreen"
-	Loaded="Window_Loaded">
+	Loaded="Window_Loaded"
+	Closed="Window_Closed">
 	<Window.Resources>
 	    <Storyboard x:Key="FadeOutBorder">
 	      	<DoubleAnimation Duration="0:0:0.2"
