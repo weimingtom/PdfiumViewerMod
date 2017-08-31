@@ -76,7 +76,7 @@ namespace PdfiumViewer
 			this.SizeChanged += new SizeChangedEventHandler(PdfRenderer_SizeChanged);
             _filename = null;
             
-            _annotList.Add(new List<Point>());
+            //注意，请把初始化操作写在Load()
         }
 
 		void PdfRenderer_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -437,7 +437,11 @@ namespace PdfiumViewer
                 throw new ArgumentNullException("document");
             if (document.getPageCount() == 0)
                 throw new ArgumentException("Document does not contain any pages", "document");
-
+			
+            _annotList.Clear();
+            _annotList.Add(new List<Point>());
+            _pageAnnotList.Clear();
+            
             Document = document;
 
             SetDisplayRectLocation(new Point(0, 0));
