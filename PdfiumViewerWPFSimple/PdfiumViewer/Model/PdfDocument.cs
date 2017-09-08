@@ -129,7 +129,7 @@ namespace PdfiumViewer
         {
             var size = PageSizes[page];
 
-            double scale = 1;
+            double scale = 1; //FIXME: for acceleration, use 1.0 / 2;
             return Render(page, dpiX, dpiY, 
                           new System.Drawing.RectangleF(0, 0, (float)(size.Width / scale), (float)(size.Height / scale)), 
                           new System.Drawing.RectangleF(0, 0, (float)(size.Width / scale), (float)(size.Height / scale)), forPrinting);

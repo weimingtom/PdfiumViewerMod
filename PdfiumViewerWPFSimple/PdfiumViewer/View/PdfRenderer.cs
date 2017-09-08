@@ -24,6 +24,7 @@ namespace PdfiumViewer
 		private const bool ENABLE_ANNOT = true; // 
 		private const bool ENABLE_ANNOT_SCREEN = false; //相对于屏幕
 		private const bool ENABLE_ANNOT_PAGE = true; //相对于pdf文档页面
+		private const bool SHOW_CURSOR = false;
 		
 		private BackgroundWorker worker = new BackgroundWorker();
 		private Stack<LoadQueueItem> pendingQueue = new Stack<LoadQueueItem>(); 
@@ -38,7 +39,7 @@ namespace PdfiumViewer
         	set {enableAnnot = value; this.InvalidateVisual();}
         }
         private bool enableAnnot = false;
-        private double _annotThick = 4.0; //FIXME:目前是个固定值
+        private double _annotThick = 2.0; //FIXME:目前是个固定值
         private bool isAnnoting = false;
         public double _mouseMoveX = -1;
         public double _mouseMoveY = -1;
@@ -927,7 +928,7 @@ namespace PdfiumViewer
 					}
 				}
 				//cursor pen
-				if (enableAnnot)
+				if (enableAnnot && SHOW_CURSOR)
 				{
             		drawingContext.DrawEllipse(Brushes.Red, null, new Point(_mouseMoveX, _mouseMoveY), _annotThick * 0.5 * this.Zoom, _annotThick * 0.5 * this.Zoom);
 				}
@@ -1171,7 +1172,7 @@ namespace PdfiumViewer
  		//------------------------------------
  		//annot
  		
-        private void createAnnotMove()
+        public void createAnnotMove()
         {
         	if (enableAnnot)
             {
@@ -1230,12 +1231,14 @@ namespace PdfiumViewer
             {
         		_mouseMoveX = e.GetPosition(this).X;
         		_mouseMoveY = e.GetPosition(this).Y;
-        		this.InvalidateVisual();        	
+        		if (SHOW_CURSOR) this.InvalidateVisual();
         		
         		if (!Keyboard.IsKeyDown(Key.Space))
         		{
         			if (Capture)
         			{
+        				if (!SHOW_CURSOR) this.InvalidateVisual();
+        				
         				isAnnoting = true;
         				this.onDrag(e);
         			}
@@ -1276,6 +1279,56 @@ namespace PdfiumViewer
     			}
 			}
 			//end
+        }
+        
+        public void onManiDragBegin()
+        {
+        	//Debug.WriteLine("========================onManiBegin()");
+        	this.createAnnotMove();
+        	isAnnoting = true;
+        	this.InvalidateVisual();
+        }
+        
+        public void onManiDragEnd()
+        {
+        	this.createAnnotMove();
+        	isAnnoting = false;
+        	this.InvalidateVisual();
+        }
+        
+        public void onManiDrag(double x, double y)
+        {	        
+        	//Debug.WriteLine("========================onManiDrag(xy) : x=" + x + ", y=" + y);
+        	//here annot start
+        	//Debug.WriteLine("Annot x:" + e.GetPosition(this).X + " y:" + e.GetPosition(this).Y);
+			if (_annotList.Count > 0 && _annotList[_annotList.Count - 1] != null)
+			{
+				List<Point> aList = _annotList[_annotList.Count - 1];
+				aList.Add(new Point(x, y));
+			}
+			if (_pageAnnotList.Count > 0 && _pageAnnotList[_pageAnnotList.Count - 1] != null)
+			{
+				PagePoint pagePoint = getPagePoint(x, y);
+				if (pagePoint != null)
+				{
+					if (_pageAnnotList[_pageAnnotList.Count - 1].page == -1)
+					{
+    					_pageAnnotList[_pageAnnotList.Count - 1].page = pagePoint.page;
+					}
+					else if (_pageAnnotList[_pageAnnotList.Count - 1].page == pagePoint.page)
+					{
+    					List<Point> aList = _pageAnnotList[_pageAnnotList.Count - 1].pts;
+    					aList.Add(new Point(pagePoint.X, pagePoint.Y));
+					}
+					else
+					{
+						//FIXME: the stroke is not in the same page
+					}
+    			}
+			}
+			//end
+			isAnnoting = true;
+        	this.InvalidateVisual();
         }
         
         protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
@@ -1363,10 +1416,12 @@ namespace PdfiumViewer
 						}
 					}
 				}
+				this._pageAnnotList.Clear();
 				return true;
 			}
 			else
 			{
+				this._pageAnnotList.Clear();
 				return false;
 			}
         }
@@ -1448,8 +1503,12 @@ namespace PdfiumViewer
 			}
         }
         
-        public bool hasAnnot()
+        public bool canUndoAnnot()
         {
+        	if (!this.enableAnnot) 
+        	{
+        		return false;
+        	}
 			Dictionary<int, List<PageAnnot>> mapPage = new Dictionary<int, List<PageAnnot>>();
 			foreach (PageAnnot pageAnnot in this._pageAnnotList)
 			{

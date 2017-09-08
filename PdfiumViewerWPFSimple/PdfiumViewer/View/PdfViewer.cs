@@ -11,12 +11,16 @@ using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Windows.Input;
+using System.Diagnostics;
 
 namespace PdfiumViewer
 {
     [TemplatePart(Name = "PART_ScrollViewer", Type = typeof(ScrollViewer))]
     public class PdfViewer : Control
     {
+    	private const bool NO_RESUME_MOUSE = true; // don't resume mouse mode, not very good, see scrollViewer_ManipulationStarted e.Cancel = true; 
+    	private const bool RESUME_MOUSE = true;
+    	
         public PdfViewer()
         {
             ViewArea = new PdfArea();
@@ -140,6 +144,7 @@ namespace PdfiumViewer
             this.scrollViewer.ManipulationStarting += source_ManipulationStarting;
             this.scrollViewer.ManipulationDelta += source_ManipulationDelta;
             this.scrollViewer.ManipulationInertiaStarting += source_ManipulationInertiaStarting;
+            this.scrollViewer.ManipulationCompleted += source_ManipulationCompleted;
         }
 
         void PdfViewer_KeyDown(object sender, KeyEventArgs e)
@@ -158,16 +163,29 @@ namespace PdfiumViewer
             this.scrollViewer.ManipulationStarting -= source_ManipulationStarting;
             this.scrollViewer.ManipulationDelta -= source_ManipulationDelta;
             this.scrollViewer.ManipulationInertiaStarting -= source_ManipulationInertiaStarting;
+            this.scrollViewer.ManipulationCompleted -= source_ManipulationCompleted;
         }
 
         void scrollViewer_ManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
             var scrollBarWidth = this.scrollViewer.ComputedVerticalScrollBarVisibility == System.Windows.Visibility.Visible ? SystemParameters.VerticalScrollBarWidth : 0;
 			scrollBarWidth += 2;
-            //log.Debug(">>>>>>[][]scrollViewer_ManipulationStarted:" + e.ManipulationOrigin.X + ", w=" + (this.ActualWidth - scrollBarWidth * 2));
+            //Debug.WriteLine(">>>>>>[][]scrollViewer_ManipulationStarted:" + e.ManipulationOrigin.X + ", w=" + (this.ActualWidth - scrollBarWidth * 2));
+            //Debug.WriteLine("==================scrollViewer_ManipulationStarted");
             if (e.ManipulationOrigin.X > this.ActualWidth - scrollBarWidth * 2)
             {
-                e.Cancel();
+                e.Cancel(); //FIXME:mouse is over scrollbar, resume mouse mode
+            }
+            
+            if (NO_RESUME_MOUSE && this.ViewArea.PdfRenderer.EnableAnnot)
+        	{
+        		this.ViewArea.PdfRenderer.onManiDrag(e.ManipulationOrigin.X,
+			                                 e.ManipulationOrigin.Y);
+            }
+            
+            if (RESUME_MOUSE && this.ViewArea.PdfRenderer.EnableAnnot) //FIXME:instead of NO_RESUME_MOUSE
+            {
+            	e.Cancel();//FIXME:instead of NO_RESUME_MOUSE, resume mouse mode
             }
         }
 
@@ -177,26 +195,50 @@ namespace PdfiumViewer
         private double x1 = 0, x2 = 0;
 
         void source_ManipulationStarting(object sender, ManipulationStartingEventArgs e)
+        {        	
+        	//Debug.WriteLine("==================source_ManipulationStarting");
+        	e.ManipulationContainer = this;
+	        e.Handled = true;
+	        e.Mode = ManipulationModes.All;
+        	
+	        if (NO_RESUME_MOUSE && this.ViewArea.PdfRenderer.EnableAnnot)
+        	{
+        		this.ViewArea.PdfRenderer.onManiDragBegin();
+        		e.Handled = false;
+	        	e.Mode = ManipulationModes.Translate;
+        	}
+        }
+        
+        void source_ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
         {
-            e.ManipulationContainer = this;
-            e.Handled = true;
-            e.Mode = ManipulationModes.All;
+        	//Debug.WriteLine("==================source_ManipulationCompleted");
+	        if (NO_RESUME_MOUSE && this.ViewArea.PdfRenderer.EnableAnnot)
+        	{
+        		this.ViewArea.PdfRenderer.onManiDragEnd();
+        	}        	
         }
 
         //https://github.com/noureldien/Pen/blob/d443d27a48c3be1b8a2b0443f2191659829be424/Pen.Tools/WebfilePanel.xaml.cs
         void source_ManipulationInertiaStarting(object sender, ManipulationInertiaStartingEventArgs e)
         {
+        	//Debug.WriteLine("==================source_ManipulationInertiaStarting");
+        	
             // adjust the dispalcement behaviour
             // (10 inches * 96 DIPS per inch / 1000ms^2)
             //e.TranslationBehavior = new InertiaTranslationBehavior();¡¡
             //e.TranslationBehavior.InitialVelocity = e.InitialVelocities.LinearVelocity;
-            e.TranslationBehavior.DesiredDeceleration = 10.0 * 96.0 / (1000.0 * 1000.0);
+            if (!this.ViewArea.PdfRenderer.EnableAnnot)
+            {
+            	e.TranslationBehavior.DesiredDeceleration = 10.0 * 96.0 / (1000.0 * 1000.0);
+            }
             //e.TranslationBehavior.DesiredDisplacement = Math.Abs(e.InitialVelocities.LinearVelocity.Y) * 300;
         }
 
         //https://github.com/dendyliu/REvan-2.0/blob/0f84747ef0ca6f09db22427dae8cc77efa2e22de/InfluenceDiagram/MainWindow.xaml.cs
         void source_ManipulationDelta(object sender, ManipulationDeltaEventArgs e)
         {
+        	//Debug.WriteLine("==================source_ManipulationDelta");
+        	
             {
                 if (_gestureDetector.IsScalingAllowed)
                 {
@@ -219,14 +261,24 @@ namespace PdfiumViewer
         	
         	//log.Debug(">>>>>>>>>>>>>>>>>>>source_ManipulationDelta");
             {
-                if (_gestureDetector.IsPanningAllowed)
+        		if (_gestureDetector.IsPanningAllowed)
                 {
-                    // Translate
-                    //log.Debug(">>>>>>>>>>>>>>>>>>>source_ManipulationDelta");
-                    //this.source.s
-                    this.scrollViewer.ScrollToHorizontalOffset(this.scrollViewer.HorizontalOffset - e.DeltaManipulation.Translation.X);
-                    this.scrollViewer.ScrollToVerticalOffset(this.scrollViewer.VerticalOffset - e.DeltaManipulation.Translation.Y);
-                    
+        			if (!this.ViewArea.PdfRenderer.EnableAnnot)
+        			{
+	                    // Translate
+	                    //log.Debug(">>>>>>>>>>>>>>>>>>>source_ManipulationDelta");
+	                    //this.source.s
+	                    this.scrollViewer.ScrollToHorizontalOffset(this.scrollViewer.HorizontalOffset - e.DeltaManipulation.Translation.X);
+	                    this.scrollViewer.ScrollToVerticalOffset(this.scrollViewer.VerticalOffset - e.DeltaManipulation.Translation.Y);
+        			}
+        			
+        			if (NO_RESUME_MOUSE && this.ViewArea.PdfRenderer.EnableAnnot)
+        			{
+        				//Debug.WriteLine(">>>>>>>>>>>>>>>>>>>source_ManipulationDelta,x=" + e.ManipulationOrigin.X + ",tx=" + e.CumulativeManipulation.Translation.X);
+        				this.ViewArea.PdfRenderer.onManiDrag(e.ManipulationOrigin.X,
+        				                                 e.ManipulationOrigin.Y);
+        			}
+        			
                     return;
                 }
             }

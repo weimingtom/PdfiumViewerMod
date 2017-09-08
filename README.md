@@ -14,3 +14,4 @@ PdfiumViewerWPFSimple
 * v2: clip page paint
 * v3: auto switch between page cache paint and clip page paint (first sync to github).  
 * v4: ink annot and undo tool, mupdf annot writer (mupdfannot.exe).  
+* v5: annot improving.  
