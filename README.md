@@ -15,3 +15,7 @@ PdfiumViewerWPFSimple
 * v3: auto switch between page cache paint and clip page paint (first sync to github).  
 * v4: ink annot and undo tool, mupdf annot writer (mupdfannot.exe).  
 * v5: annot improving.  
+
+## Build pdfium.dll  
+See https://github.com/weimingtom/pdfium_fork_build  
+But I don't use my built dll in this project  
