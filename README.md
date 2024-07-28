@@ -25,4 +25,7 @@ But I don't use my built dll in this project
 * search https://github.com/pvginkel/PdfiumViewer source code with 'PrintPreviewDialog'.  
 * MuPDF.NET may be yet another way to print or view pdf files (I don't know details and if it is open source)  
 * see https://artifex.com/developers/  
-* see https://www.nuget.org/packages/MuPDF.NET  
+* see https://www.nuget.org/packages/MuPDF.NET
+* Basic PDF viewers written in Python and C#
+* https://mupdf.readthedocs.io/en/latest/language-bindings.html
+* https://git.ghostscript.com/?p=mupdf.git;a=blob;f=scripts/mupdfwrap_gui.cs  
