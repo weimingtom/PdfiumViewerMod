@@ -20,7 +20,7 @@ PdfiumViewerWPFSimple
 See https://github.com/weimingtom/pdfium_fork_build  
 But I don't use my built dll in this project  
 
-## How to print pdf files  
+## How to print or view pdf files (by MuPDF in CSharp)   
 * see https://github.com/weimingtom/PdfiumViewerMod/issues/1  
 * search https://github.com/pvginkel/PdfiumViewer source code with 'PrintPreviewDialog'.  
 * MuPDF.NET may be yet another way to print or view pdf files (I don't know details and if it is open source)  
@@ -28,4 +28,5 @@ But I don't use my built dll in this project
 * see https://www.nuget.org/packages/MuPDF.NET
 * Basic PDF viewers written in Python and C#
 * https://mupdf.readthedocs.io/en/latest/language-bindings.html
-* https://git.ghostscript.com/?p=mupdf.git;a=blob;f=scripts/mupdfwrap_gui.cs  
+* https://git.ghostscript.com/?p=mupdf.git;a=blob;f=scripts/mupdfwrap_gui.cs
+* https://github.com/ArtifexSoftware/mupdf/blob/master/scripts/mupdfwrap_gui.cs  
