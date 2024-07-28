@@ -21,6 +21,8 @@ See https://github.com/weimingtom/pdfium_fork_build
 But I don't use my built dll in this project  
 
 ## How to print pdf files  
+* see https://github.com/weimingtom/PdfiumViewerMod/issues/1  
+* search https://github.com/pvginkel/PdfiumViewer source code with 'PrintPreviewDialog'.  
 * MuPDF.NET may be yet another way to print or view pdf files (I don't know details and if it is open source)  
 * see https://artifex.com/developers/  
 * see https://www.nuget.org/packages/MuPDF.NET  
